@@ -1,4 +1,4 @@
-![Screenshot from 2025-05-24 12-01-06](https://github.com/user-attachments/assets/9ca27acf-dd46-4326-9bcd-ed762bbc48b6)# GeoCurrents
+ GeoCurrents
 A dynamic web application that seamlessly combines geographic exploration with real-time news discovery. Simply input any location - from cities and districts to countries and continents - and instantly navigate to that place on an interactive map while accessing comprehensive, up-to-date news coverage from that region.
 Technical Stack:
 

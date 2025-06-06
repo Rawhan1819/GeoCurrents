@@ -17,5 +17,6 @@ Comprehensive geographic scope from local to continental levels
 
 🎯 Impact:
 Perfect for travelers, researchers, journalists, and anyone seeking to understand global events through geographic context. This tool bridges the gap between location awareness and current affairs, making global news more accessible and geographically relevant.
+![Uploading Screenshot from 2025-06-06 11-44-44.png…]()
 
 

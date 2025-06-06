@@ -1,0 +1,257 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    background-color: #f8f9fa;
+    color: #333;
+}
+
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 20px auto;
+}
+
+/* ====== Header with input and button ====== */
+header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 10px;
+}
+
+#locationInput {
+    width: 250px;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    transition: border-color 0.3s ease;
+}
+
+#locationInput:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+}
+
+#getInfoBtn {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #007bff;
+    border: none;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#getInfoBtn:hover {
+    background-color: #0056b3;
+}
+
+/* ====== Map Styles ====== */
+#map {
+    width: 100%;
+    height: 500px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    position: relative; /* Important for the fixed marker positioning */
+    overflow: hidden;
+}
+
+/* Fixed center marker styling */
+#center-marker {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 32px;
+    height: 32px;
+    background-image: url('https://cdn-icons-png.flaticon.com/512/684/684908.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    transform: translate(-50%, -100%);
+    z-index: 1000;
+    pointer-events: none;
+    filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
+}
+
+/* Alternative marker styles - you can uncomment to try different looks */
+/*
+#center-marker {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    background-color: #ff4444;
+    border: 3px solid white;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    pointer-events: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+*/
+
+/* ====== News Section ====== */
+#news {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: flex-start;
+    /* For descending order from left to right */
+    flex-direction: row-reverse;
+}
+
+/* Each News Box */
+.news-item {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    padding: 15px;
+    width: 48%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.news-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+/* News Title */
+.news-item h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.2rem;
+    color: #007bff;
+    line-height: 1.3;
+}
+
+.news-item h3 a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.news-item h3 a:hover {
+    text-decoration: underline;
+}
+
+/* News Image */
+.news-item img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    transition: opacity 0.3s ease;
+}
+
+.news-item img:hover {
+    opacity: 0.9;
+}
+
+/* News Summary (limit to approx 10 lines) */
+.news-item p {
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 10;
+    -webkit-box-orient: vertical;
+    line-height: 1.4em;
+    max-height: 14em; /* 10 lines * 1.4em line height */
+    margin-bottom: 12px;
+    color: #444;
+    font-size: 0.95rem;
+}
+
+/* News URL */
+.news-item .news-url {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 600;
+    margin-bottom: 12px;
+    padding: 8px 12px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    display: inline-block;
+    transition: background-color 0.3s ease;
+}
+
+.news-item .news-url:hover {
+    background-color: #007bff;
+    color: white;
+    text-decoration: none;
+}
+
+/* Date and time left aligned at bottom */
+.news-item small {
+    font-size: 0.85rem;
+    color: #666;
+    text-align: left;
+    margin-top: auto;
+}
+
+/* Loading state styling */
+#news p {
+    text-align: center;
+    font-size: 1.1rem;
+    color: #666;
+    padding: 40px 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container {
+        width: 95%;
+        margin: 10px auto;
+    }
+    
+    header {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    #locationInput {
+        width: 100%;
+        max-width: 300px;
+    }
+    
+    #map {
+        height: 400px;
+    }
+    
+    #news {
+        flex-direction: column;
+    }
+    
+    .news-item {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    #map {
+        height: 350px;
+    }
+    
+    .news-item {
+        padding: 12px;
+    }
+    
+    .news-item h3 {
+        font-size: 1.1rem;
+    }
+    
+    .news-item img {
+        height: 150px;
+    }
+}

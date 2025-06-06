@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location News App</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            height: 100vh;
+        }
+
+        .map-section {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .search-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        #locationInput {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        #locationInput:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        #getInfoBtn {
+            padding: 12px 24px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        #getInfoBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        #getInfoBtn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #map {
+            flex: 1;
+            border-radius: 10px;
+            min-height: 400px;
+            position: relative;
+        }
+
+        .news-section {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow-y: auto;
+        }
+
+        .news-header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #f0f0f0;
+        }
+
+        .news-header h2 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .news-header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .news-item {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .news-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .news-source-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .news-item h3 {
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .news-item h3 a {
+            color: #333;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .news-item h3 a:hover {
+            color: #667eea;
+        }
+
+        .news-item img {
+            width: 100%;
+            max-height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .news-item p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .news-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .news-url {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .news-url:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+
+        .news-footer small {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .loading-message, .no-news-message, .error-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+
+        .loading-message {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .error-message {
+            color: #e74c3c;
+        }
+
+        .status-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 10000;
+            transition: all 0.3s ease;
+        }
+
+        .status-loading {
+            background: #ffeaa7;
+            color: #2d3436;
+        }
+
+        .status-success {
+            background: #00b894;
+            color: white;
+        }
+
+        .status-error {
+            background: #e17055;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+                height: auto;
+                min-height: 100vh;
+            }
+            
+            .search-container {
+                flex-direction: column;
+            }
+            
+            #map {
+                min-height: 300px;
+            }
+        }
+
+        #center-marker {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 32px;
+            height: 32px;
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTQiIGZpbGw9IiM2NjdlZWEiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iNCIvPgo8Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSI2IiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            pointer-events: none;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="map-section">
+            <div class="search-container">
+                <input type="text" id="locationInput" placeholder="Enter a location (e.g., New York, London, Tokyo)">
+                <button id="getInfoBtn">Get News</button>
+            </div>
+            <div id="map"></div>
+        </div>
+        
+        <div class="news-section">
+            <div id="news">
+                <div class="loading-message">
+                    <h2>🌍 Welcome to Location News</h2>
+                    <p>Enter a location or drag the map to get recent news from that area</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="status-indicator" class="status-indicator" style="display: none;"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Initialize map
+        let map = L.map("map", {
+            zoomControl: true,
+            dragging: true,
+            touchZoom: true,
+            doubleClickZoom: true,
+            scrollWheelZoom: true,
+            boxZoom: true,
+            keyboard: true
+        }).setView([20, 78], 5);
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: "&copy; OpenStreetMap contributors",
+            maxZoom: 19
+        }).addTo(map);
+
+        const newsDiv = document.getElementById("news");
+        const statusIndicator = document.getElementById("status-indicator");
+        const cache = new Map();
+        let currentRequest = null;
+        let currentGeocodeRequest = null;
+
+        // Status indicator functions
+        function showStatus(message, type) {
+            statusIndicator.textContent = message;
+            statusIndicator.className = `status-indicator status-${type}`;
+            statusIndicator.style.display = 'block';
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusIndicator.style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        function hideStatus() {
+            statusIndicator.style.display = 'none';
+        }
+
+        // Create fixed center marker after map container is ready
+        map.whenReady(() => {
+            const mapContainer = document.getElementById("map");
+            
+            const centerMarker = document.createElement("div");
+            centerMarker.id = "center-marker";
+            mapContainer.appendChild(centerMarker);
+            
+            console.log("Map is ready, initializing...");
+            
+            // Initial news fetch for current center
+            setTimeout(() => {
+                const center = map.getCenter();
+                console.log("Initial center:", center.lat, center.lng);
+                reverseGeocodeAndFetch(center.lat, center.lng);
+            }, 500);
+        });
+
+        // Add visual feedback when map is being moved
+        map.on("movestart", () => {
+            console.log("Map movement started");
+            const centerMarker = document.getElementById("center-marker");
+            if (centerMarker) {
+                centerMarker.style.transform = "translate(-50%, -50%) scale(1.2)";
+                centerMarker.style.transition = "transform 0.2s ease";
+            }
+        });
+
+        map.on("moveend", () => {
+            console.log("Map movement ended");
+            const centerMarker = document.getElementById("center-marker");
+            if (centerMarker) {
+                centerMarker.style.transform = "translate(-50%, -50%) scale(1)";
+            }
+        });
+
+        // Debounce function to limit API calls during map movement
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Debounced function to update news when map stops moving
+        const debouncedUpdate = debounce(() => {
+            const center = map.getCenter();
+            const lat = center.lat;
+            const lon = center.lng;
+            console.log(`Map center changed: ${lat.toFixed(4)}, ${lon.toFixed(4)}`);
+            reverseGeocodeAndFetch(lat, lon);
+        }, 1200);
+
+        // Update news when map movement ends
+        map.on("moveend", debouncedUpdate);
+        map.on("dragend", debouncedUpdate);
+        map.on("zoomend", debouncedUpdate);
+
+        // Manual location search functionality
+        document.getElementById("getInfoBtn").addEventListener("click", getInfo);
+        document.getElementById("locationInput").addEventListener("keypress", function(e) {
+            if (e.key === "Enter") {
+                getInfo();
+            }
+        });
+
+        function getInfo() {
+            const location = document.getElementById("locationInput").value.trim();
+            if (!location) {
+                alert("Please enter a location.");
+                return;
+            }
+
+            const btn = document.getElementById("getInfoBtn");
+            btn.disabled = true;
+            btn.textContent = "Searching...";
+            showStatus("Searching for location...", "loading");
+
+            // Use Nominatim API for geocoding with better error handling
+            const geocodeController = new AbortController();
+            
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1&addressdetails=1`, {
+                signal: geocodeController.signal
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error(`Geocoding failed: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then((data) => {
+                    if (!data || data.length === 0) {
+                        throw new Error("Location not found");
+                    }
+
+                    const lat = parseFloat(data[0].lat);
+                    const lon = parseFloat(data[0].lon);
+
+                    // Fly to location with appropriate zoom
+                    const zoomLevel = getZoomLevel(data[0].type || 'city');
+                    map.flyTo([lat, lon], zoomLevel, {
+                        animate: true,
+                        duration: 1.5,
+                    });
+                    
+                    showStatus("Location found! Loading news...", "success");
+                })
+                .catch((error) => {
+                    console.error("Geocoding error:", error);
+                    showStatus("Location not found. Try a different search term.", "error");
+                    setTimeout(hideStatus, 5000);
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.textContent = "Get News";
+                });
+        }
+
+        // Determine appropriate zoom level based on location type
+        function getZoomLevel(locationType) {
+            const zoomMap = {
+                'country': 6,
+                'state': 8,
+                'city': 10,
+                'town': 12,
+                'village': 14,
+                'default': 10
+            };
+            return zoomMap[locationType] || zoomMap['default'];
+        }
+
+        // Reverse geocode and fetch news for given coordinates
+        function reverseGeocodeAndFetch(lat, lon) {
+            console.log(`Starting reverse geocode for: ${lat.toFixed(4)}, ${lon.toFixed(4)}`);
+            
+            // Cancel previous requests
+            if (currentGeocodeRequest) {
+                console.log("Cancelling previous geocoding request");
+                currentGeocodeRequest.abort();
+            }
+            
+            if (currentRequest) {
+                console.log("Cancelling previous news request");
+                currentRequest.abort();
+            }
+            
+            const geocodeController = new AbortController();
+            currentGeocodeRequest = geocodeController;
+            
+            // Show loading immediately for better UX
+            setLoading(true, `${lat.toFixed(2)}, ${lon.toFixed(2)}`);
+            
+            // Add timeout to geocoding request
+            const geocodeTimeout = setTimeout(() => {
+                geocodeController.abort();
+            }, 10000); // 10 second timeout
+            
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`, {
+                signal: geocodeController.signal
+            })
+                .then((res) => {
+                    clearTimeout(geocodeTimeout);
+                    if (!res.ok) {
+                        throw new Error(`Geocoding failed: ${res.status}`);
+                    }
+                    return res.json();
+                })
+                .then((data) => {
+                    let location = '';
+                    
+                    if (data.address) {
+                        const addr = data.address;
+                        const parts = [];
+                        
+                        if (addr.city) parts.push(addr.city);
+                        else if (addr.town) parts.push(addr.town);
+                        else if (addr.village) parts.push(addr.village);
+                        else if (addr.suburb) parts.push(addr.suburb);
+                        
+                        if (addr.state) parts.push(addr.state);
+                        else if (addr.region) parts.push(addr.region);
+                        
+                        if (addr.country) parts.push(addr.country);
+                        
+                        location = parts.join(', ') || data.display_name || `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+                    } else {
+                        location = data.display_name || `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+                    }
+                    
+                    console.log(`Geocoded location: ${location}`);
+                    fetchNews(location);
+                })
+                .catch((error) => {
+                    clearTimeout(geocodeTimeout);
+                    if (error.name === 'AbortError') {
+                        console.log('Geocoding request aborted');
+                        return;
+                    }
+                    console.warn("Reverse geocoding failed:", error);
+                    // Use coordinates as fallback
+                    const fallbackLocation = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+                    console.log(`Using fallback location: ${fallbackLocation}`);
+                    fetchNews(fallbackLocation);
+                })
+                .finally(() => {
+                    currentGeocodeRequest = null;
+                });
+        }
+
+        // Fetch news for a given location
+        async function fetchNews(location) {
+            const cacheKey = location.toLowerCase().trim().replace(/,\s+/g, ',');
+            
+            if (cache.has(cacheKey)) {
+                console.log('Using cached news for:', location);
+                renderArticles(cache.get(cacheKey), location);
+                return;
+            }
+            
+            setLoading(true, location);
+            
+            const newsController = new AbortController();
+            currentRequest = newsController;
+            
+            // Set a timeout for the news request
+            const newsTimeout = setTimeout(() => {
+                newsController.abort();
+            }, 15000); // 15 second timeout
+            
+            try {
+                let articles = [];
+                
+                // Try RSS feed approach first (more reliable)
+                try {
+                    articles = await fetchFromRSSFeeds(location, newsController.signal);
+                    if (articles.length === 0) {
+                        throw new Error("No articles from RSS feeds");
+                    }
+                } catch (error) {
+                    console.log('RSS feeds failed, using sample news:', error.message);
+                    articles = getSampleNews(location);
+                }
+                
+                console.log(`Received ${articles.length} articles for ${location}`);
+                cache.set(cacheKey, articles);
+                renderArticles(articles, location);
+                
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    console.log('News request aborted');
+                    return;
+                }
+                console.error("Error fetching news:", error);
+                
+                // Show sample news instead of error
+                const sampleArticles = getSampleNews(location);
+                renderArticles(sampleArticles, location);
+                
+            } finally {
+                clearTimeout(newsTimeout);
+                currentRequest = null;
+            }
+        }
+
+        // Fetch from RSS feeds with multiple sources
+        async function fetchFromRSSFeeds(location, signal) {
+            const searchQuery = extractSearchQuery(location);
+            const articles = [];
+            
+            // Multiple RSS sources to try
+            const rssSources = [
+                {
+                    name: 'Google News',
+                    url: `https://news.google.com/rss/search?q=${encodeURIComponent(searchQuery)}&hl=en&gl=US&ceid=US:en`
+                },
+                {
+                    name: 'BBC News',
+                    url: `https://feeds.bbci.co.uk/news/world/rss.xml`
+                }
+            ];
+            
+            for (const source of rssSources) {
+                try {
+                    const rssToJsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(source.url)}&count=10&api_key=YOUR_API_KEY`;
+                    
+                    const response = await fetch(rssToJsonUrl, { 
+                        signal,
+                        headers: {
+                            'Accept': 'application/json',
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        console.log(`${source.name} RSS failed:`, response.status);
+                        continue;
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.status === 'ok' && data.items) {
+                        const sourceArticles = data.items.slice(0, 8).map(item => ({
+                            title: item.title,
+                            description: cleanDescription(item.description || item.content || 'No description available'),
+                            url: item.link,
+                            image: extractImageFromContent(item.content) || item.enclosure?.link || null,
+                            source: source.name,
+                            publishedAt: formatDate(item.pubDate)
+                        })).filter(article => article.title && !article.title.includes('[Removed]'));
+                        
+                        articles.push(...sourceArticles);
+                        
+                        if (articles.length >= 10) break; // Stop when we have enough articles
+                    }
+                } catch (error) {
+                    console.log(`Error fetching from ${source.name}:`, error.message);
+                    continue;
+                }
+            }
+            
+            return articles.slice(0, 12); // Return max 12 articles
+        }
+
+        // Helper function to clean HTML from descriptions
+        function cleanDescription(description) {
+            if (!description) return 'No description available';
+            
+            // Remove HTML tags
+            let cleaned = description.replace(/<[^>]*>/g, '');
+            
+            // Decode HTML entities
+            const textarea = document.createElement('textarea');
+            textarea.innerHTML = cleaned;
+            cleaned = textarea.value;
+            
+            // Truncate if too long
+            if (cleaned.length > 200) {
+                cleaned = cleaned.substring(0, 200) + '...';
+            }
+            
+            return cleaned || 'No description available';
+        }
+
+        // Helper function to extract images from content
+        function extractImageFromContent(content) {
+            if (!content) return null;
+            
+            const imgMatch = content.match(/<img[^>]+src="([^">]+)"/);
+            return imgMatch ? imgMatch[1] : null;
+        }
+
+        // Helper function to format dates
+        function formatDate(dateString) {
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (error) {
+                return 'Recent';
+            }
+        }
+
+        // Sample news when all APIs fail - more realistic and diverse
+        function getSampleNews(location) {
+            const currentDate = new Date().toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+            
+            const sampleNews = [
+                {
+                    title: `Local Updates from ${location} - Community News`,
+                    description: `Stay informed about the latest developments and community news in ${location}. This is a sample article to demonstrate the app functionality when live news feeds are unavailable.`,
+                    url: `https://news.google.com/search?q=${encodeURIComponent(location)}`,
+                    image: null,
+                    source: 'Local News',
+                    publishedAt: currentDate
+                },
+                {
+                    title: `${location} Weather and Regional Updates`,
+                    description: `Current weather conditions and regional news updates for ${location}. For real-time updates, please visit major news websites directly.`,
+                    url: `https://www.bbc.com/news/world`,
+                    image: null,
+                    source: 'Weather & News',
+                    publishedAt: currentDate
+                },
+                {
+                    title: `Breaking: Economic Developments in ${location}`,
+                    description: `Recent economic and business developments affecting ${location}. This sample demonstrates how news would appear when the app is fully functional with live data feeds.`,
+                    url: `https://www.reuters.com/world/`,
+                    image: null,
+                    source: 'Business News',
+                    publishedAt: currentDate
+                },
+                {
+                    title: `Travel and Tourism Updates for ${location}`,
+                    description: `Latest travel advisories and tourism information for visitors to ${location}. Check official tourism websites for the most current information.`,
+                    url: `https://www.cnn.com/travel`,
+                    image: null,
+                    source: 'Travel News',
+                    publishedAt: currentDate
+                }
+            ];
+            
+            return sampleNews;
+        }
+
+        // Extract search query from location string
+        function extractSearchQuery(location) {
+            const parts = location.split(',').map(part => part.trim());
+            
+            // Return the most significant part (usually city or country)
+            if (parts.length >= 2) {
+                return parts[0]; // Use city/locality first
+            }
+            
+            return parts[0] || location;
+        }
+
+        // Show/hide loading state
+        function setLoading(isLoading, location = '') {
+            if (isLoading) {
+                newsDiv.innerHTML = `<div class="loading-message">
+                    <p>🔄 Loading recent news for ${location}...</p>
+                    <p>Searching latest articles...</p>
+                </div>`;
+            }
+        }
+
+        // Render news articles
+        function renderArticles(articles, location) {
+            if (!articles || articles.length === 0) {
+                newsDiv.innerHTML = `<div class="no-news-message">
+                    <p>📰 No recent news found for <strong>${location}</strong></p>
+                    <p>Try searching for a larger city or region, or drag the map to explore other areas.</p>
+                </div>`;
+                return;
+            }
+
+            newsDiv.innerHTML = `<div class="news-header">
+                <h2>📰 Recent News for ${location}</h2>
+                <p>Found ${articles.length} recent articles</p>
+            </div>`;
+
+            articles.forEach((article) => {
+                const div = document.createElement("div");
+                div.className = "news-item";
+
+                // Determine source badge color
+                const sourceColors = {
+                    'BBC News': '#bb4545',
+                    'Reuters': '#ff6600',
+                    'CNN': '#cc0000',
+                    'The Guardian': '#052962',
+                    'Associated Press': '#0066cc',
+                    'Google News': '#4285f4',
+                    'Local News': '#28a745',
+                    'Weather & News': '#ffc107',
+                    'Business News': '#6f42c1',
+                    'Travel News': '#20c997',
+                    'default': '#667eea'
+                };
+                
+                const sourceColor = sourceColors[article.source] || sourceColors['default'];
+
+                div.innerHTML = `
+                    <div class="news-source-badge" style="background-color: ${sourceColor}">
+                        ${article.source || 'News Source'}
+                    </div>
+                    <h3><a href="${article.url}" target="_blank" rel="noopener noreferrer">${article.title}</a></h3>
+                    ${article.image ? 
+                        `<img src="${article.image}" alt="News Image" loading="lazy" onerror="this.style.display='none'" />` : 
+                        ''
+                    }
+                    <p>${article.description}</p>
+                    <div class="news-footer">
+                        <a href="${article.url}" target="_blank" rel="noopener noreferrer" class="news-url">Read Full Article →</a>
+                        <small>📅 ${article.publishedAt}</small>
+                    </div>
+                `;
+                newsDiv.appendChild(div);
+            });
+        }
+
+        // Clear cache periodically (every 15 minutes)
+        setInterval(() => {
+            console.log('Clearing news cache');
+            cache.clear();
+        }, 15 * 60 * 1000);
+    </script>
+</body>
+</html>

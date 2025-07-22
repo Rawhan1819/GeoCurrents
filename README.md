@@ -1,4 +1,4 @@
-GeoCurrents
+NextGen NEWS
 
 ![Screenshot from 2025-06-06 11-44-44](https://github.com/user-attachments/assets/077ff074-6f89-4dce-9a19-76b9c5219d82)
 
